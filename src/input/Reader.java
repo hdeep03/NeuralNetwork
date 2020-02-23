@@ -1,7 +1,5 @@
 package input;
-
 import java.util.Scanner;
-
 import perceptron.Network;
 
 /**
