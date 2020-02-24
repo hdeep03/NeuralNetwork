@@ -1,7 +1,10 @@
 package perceptron;
 
+import java.util.Map;
+
 /**
- * A feed-forward neural network that can do forward propagation.
+ * A feed-forward neural network that can do
+ * forward propagation.
  * 
  * @author Harsh Deep Period 2
  * @version 2.24.20
@@ -18,6 +21,7 @@ public class Network
                                     // node in the n+1 layer
 
    private int numLayers;
+   private static final double LAMDA = 5.0;
 
    /**
     * Initializes the nodes and weights for the
@@ -35,7 +39,7 @@ public class Network
    public Network(int inputNodes, int[] hiddenLayerNodes, int outputNodes)
    {
       nodes = new double[2 + hiddenLayerNodes.length][];
-      
+
       numLayers = nodes.length;
 
       nodes[0] = new double[inputNodes];
@@ -64,6 +68,17 @@ public class Network
       {
          weights[n] = new double[nodes[n].length][nodes[n + 1].length];
       }
+   }// Network
+   public void trainNetwork(Map<double[][], Double> trainSet) 
+   {
+      
+   }
+   
+   private void updateWeights(double[] activations, double truth) 
+   {
+      nodes[0] = activations;
+      double F = forwardPropagation()[0];
+      double omega = truth-F;
    }
 
    /**
@@ -195,12 +210,17 @@ public class Network
     */
    public double activation(double x)
    {
-      return x; // The activation function should be changed to
-                // suit needs. If changed, the activation_deriv
-                // should be changed as well to be the derivative
-                // of this function
+      return 1.0 / (1.0 + Math.exp(-x)); // The activation function should be changed to
+                                         // suit needs. If changed, the activation_deriv
+                                         // should be changed as well to be the derivative
+                                         // of this function
    }
-
+   
+   private double error(double T, double F) 
+   {
+      double omega = (T-F);
+      return 0.5*omega*omega;
+   }
    /**
     * The derivative of the activation function.
     * 
@@ -211,8 +231,9 @@ public class Network
     */
    public double activationDerivative(double x)
    {
-      return 1.0; // The derivative of the activation function. This
-                  // should be changed to be the derivative of the
-                  // activation function.
+      double activated = activation(x);
+      return activated * (1.0 - activated); // The derivative of the activation function. This
+                                            // should be changed to be the derivative of the
+                                            // activation function.
    }
 }// public class Network
