@@ -1,20 +1,28 @@
 package perceptron;
 
 /**
- * A feed-forward neural network
+ * A feed-forward neural network that can do forward propagation.
  * 
  * @author Harsh Deep Period 2
- * @version 2.20.20
+ * @version 2.24.20
  */
 public class Network
 {
-   private double[][] nodes;
-   private double[][][] weights;
+   private double[][] nodes;        // Nodes will be referenced by the n, j notation
+                                    // where n is the layer and j is the particular
+                                    // node in this layer
+
+   private double[][][] weights;    // Weights will be referenced by n,j,i notation
+                                    // where n is starting node layer, j is parent
+                                    // node in this node layer, and i is the child
+                                    // node in the n+1 layer
+
    private int numLayers;
 
    /**
     * Initializes the nodes and weights for the
-    * network
+    * network. Nodes and weights are all set to
+    * values of 0.
     * 
     * @param inputNodes       the number of input
     *                         nodes to the network
@@ -27,6 +35,7 @@ public class Network
    public Network(int inputNodes, int[] hiddenLayerNodes, int outputNodes)
    {
       nodes = new double[2 + hiddenLayerNodes.length][];
+      
       numLayers = nodes.length;
 
       nodes[0] = new double[inputNodes];
@@ -47,7 +56,8 @@ public class Network
 
       /*
        * Initializes the weights array based on the
-       * dimensions of the nodes array. Weight array may be jagged.
+       * dimensions of the nodes array. Weight array may
+       * be jagged.
        */
       for (int n = 0; n < numLayers - 1; n++)
 
@@ -138,7 +148,6 @@ public class Network
       /*
        * Iterates across all connectivity layers. n is
        * the layer of the child node.
-       * 
        */
       for (int n = 1; n < numLayers; n++)
       {
@@ -152,8 +161,11 @@ public class Network
             System.out.print("DEBUG: a[" + n + "][" + j + "] = ");
 
             double dotProduct = 0.0;
-            for (int i = 0; i < nodes[n - 1].length; i++) // Computes the dot product of the input values to
-                                                          // a node and the weights.
+            /*
+             * Computes the dot product of the input values to
+             * a node and the weights.
+             */
+            for (int i = 0; i < nodes[n - 1].length; i++)
             {
                System.out.print("a[" + (n - 1) + "][" + i + "]*w[" + (n - 1) + "][" + i + "][" + j + "]+");
                dotProduct += nodes[n - 1][i] * weights[n - 1][i][j];
@@ -197,7 +209,7 @@ public class Network
     * @return the derivative of the activation
     *         function at the given value.
     */
-   public double activation_deriv(double x)
+   public double activationDerivative(double x)
    {
       return 1.0; // The derivative of the activation function. This
                   // should be changed to be the derivative of the

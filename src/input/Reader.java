@@ -4,10 +4,10 @@ import perceptron.Network;
 
 /**
  * A Reader file that takes in input from various
- * sources
+ * sources and acts as a driver for the Network.
  * 
  * @author Harsh Deep Period 2
- * @version 2.20.20
+ * @version 2.23.20
  */
 public class Reader
 {
