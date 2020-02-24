@@ -1,2 +1,2 @@
-# NeuralNetwork
+# JNeural: A Java Neural Network.
  
