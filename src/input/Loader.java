@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -17,12 +16,14 @@ import perceptron.Network;
  * sources and acts as a driver for the Network.
  * 
  * @author Harsh Deep Period 2
- * @version 2.23.20
+ * @version 3.5.20
  */
 public class Loader
 {
    public static double LAMDA = 5;
    public static final String DEFAULT_WEIGHT_OUTPUT_FILE = "WEIGHTS.out";
+   public static final int DEFAULT_MAX_ITERATIONS = 10000;
+   public static final double DEFAULT_ERROR_THRESHOLD = 0.001;
 
    /**
     * Populate the given array with weights read from
@@ -120,7 +121,16 @@ public class Loader
 
    }
 
-   public static double[][][] writeWeights(String filename, double[][][] weights) throws IOException
+   /**
+    * Write out the weights to file
+    * 
+    * @param filename the filepath to write the files
+    *                 to
+    * @param weights  the weights to be written out
+    *                 to file
+    * @throws IOException
+    */
+   public static void writeWeights(String filename, double[][][] weights) throws IOException
    {
       PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
       for (int n = 0; n < weights.length; n++)
@@ -136,10 +146,18 @@ public class Loader
       }
       out.flush();
       out.close();
-      return weights;
 
    }
 
+   /**
+    * Loads the training set from file
+    * 
+    * @param filename The file from which to read the
+    *                 training set
+    * @return A map with input activations mapping to
+    *         the expected output
+    * @throws FileNotFoundException
+    */
    public static Map<double[], Double> loadTrainSet(String filename) throws FileNotFoundException
    {
       Map<double[], Double> train = new HashMap<double[], Double>();
@@ -155,9 +173,9 @@ public class Loader
                inputs[i] = Double.valueOf(dat[i].trim());
          }
          double truth = Double.valueOf(sc.nextLine());
-         System.out.println(Arrays.toString(inputs) + " :=" + truth);
          train.put(inputs, truth);
       }
+      System.out.println("Loaded " + train.size() + " training cases.");
 
       return train;
    }
@@ -174,33 +192,60 @@ public class Loader
 
       int inputActivations = Integer.valueOf(args[0]);
       hidden[0] = Integer.valueOf(args[1]);
+      double weightHigh = 2.0;
+      double weightLow = -2.0;
 
       double lambda = Double.valueOf(args[2]);
+      Map<double[], Double> training = new HashMap<double[], Double>();
 
       Network n = new Network(inputActivations, hidden, 1, lambda);
 
-      if (args.length <= 3 || args[3].trim().equals(""))
-         n.setRandWeights(-2, 2);
-      else
+      if (args.length >= 4 && !args[3].trim().equals("")) 
       {
-         n.setWeights(readWeights(args[3], n.getWeights()));
+         weightLow = -Double.valueOf(args[3]);
+         weightHigh = Double.valueOf(args[3]);
       }
-      if (args.length <= 4 || args[4].trim().equals(""))
+      n.setRandWeights(weightLow, weightHigh);
+      if (args.length < 5 || args[4].trim().equals(""))
       {
          System.err.println("NEEDS INPUT FILE FOR TRAINING SET!");
          System.exit(1);
       }
       else
       {
-         n.trainNetwork(loadTrainSet(args[4]));
+         training = loadTrainSet(args[4]);
       }
-      if (args.length <= 5)
+      int maxIterations = 0;
+      if (args.length < 7 || args[6].trim().equals(""))
+      {
+         maxIterations = DEFAULT_MAX_ITERATIONS;
+      }
+      else
+      {
+         maxIterations = Integer.valueOf(args[6].trim());
+      }
+      double error = 0.0;
+
+      if (args.length < 8 || args[7].trim().equals(""))
+      {
+         error = DEFAULT_ERROR_THRESHOLD;
+      }
+      else
+      {
+         error = Double.valueOf(args[7].trim());
+      }
+      n.setTrainingHyperparams(maxIterations, error);
+      n.trainNetwork(training);
+      System.out.println("Weight Range: "+ weightLow+" to "+weightHigh);
+      if (args.length < 6 || args[5].trim().equals(""))
       {
          writeWeights(DEFAULT_WEIGHT_OUTPUT_FILE, n.getWeights());
+         System.out.println("Weights written to: " + DEFAULT_WEIGHT_OUTPUT_FILE);
       }
       else
       {
          writeWeights(args[5], n.getWeights());
+         System.out.println("Weights written to: " + args[5]);
       }
    }
 
