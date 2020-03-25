@@ -16,85 +16,12 @@ import perceptron.Network;
  * sources and acts as a driver for the Network.
  * 
  * @author Harsh Deep Period 2
- * @version 3.5.20
+ * @version 3.25.20
  */
 public class Loader
 {
-   public static double LAMDA = 5;
-   public static final String DEFAULT_WEIGHT_OUTPUT_FILE = "WEIGHTS.out";
-   public static final int DEFAULT_MAX_ITERATIONS = 10000;
-   public static final double DEFAULT_ERROR_THRESHOLD = 0.001;
-
-   /**
-    * Populate the given array with weights read from
-    * the console.
-    * 
-    * @param weights an array with correct dimensions
-    * @return the weights array populated with values
-    *         from the console.
-    */
-   public static double[][][] readWeightsFromConsole(double[][][] weights)
-   {
-      Scanner sc = new Scanner(System.in);
-      for (int n = 0; n < weights.length; n++)
-         for (int k = 0; k < weights[n].length; k++)
-            for (int j = 0; j < weights[n][k].length; j++)
-            {
-               System.out.println("Enter Weight for W(" + n + ", " + k + ", " + j + "): ");
-               weights[n][k][j] = sc.nextDouble();
-            }
-      return weights;
-   }
-
-   /**
-    * Asks the user for the number of input nodes
-    * 
-    * @return the number of input nodes chosen by the
-    *         user.
-    */
-   public static int readNumInputNodesFromConsole()
-   {
-      System.out.println("Enter the number of Input Nodes: ");
-      Scanner sc = new Scanner(System.in);
-      return sc.nextInt();
-   }
-
-   /**
-    * Asks the user for the number of nodes in hidden
-    * layers
-    * 
-    * @return the number of nodes in hidden layers
-    *         chosen by the user.
-    */
-   public static int readNumHiddenNodesFromConsole()
-   {
-      System.out.println("Enter the number of nodes in the hidden layer: ");
-      Scanner sc = new Scanner(System.in);
-      return sc.nextInt();
-   }
-
-   /**
-    * Reads the activations for the network from the
-    * user
-    * 
-    * @param numInputActivations the number of input
-    *                            activations the
-    *                            network has
-    * @return an array with the activations for the
-    *         network chosen by user.
-    */
-   public static double[] readActivationsFromConsole(int numInputActivations)
-   {
-      double[] activations = new double[numInputActivations];
-      Scanner sc = new Scanner(System.in);
-      for (int i = 0; i < numInputActivations; i++)
-      {
-         System.out.println("Enter the value of the node A0" + i);
-         activations[i] = sc.nextDouble();
-      }
-      return activations;
-   }
-
+   public static final String DEFAULT_WEIGHT_OUTPUT_FILE = "weights.output";
+   
    /**
     * Reads weights from the given file
     * 
@@ -117,6 +44,7 @@ public class Loader
                weights[n][k][j] = sc.nextDouble();
             }
       sc.close();
+      
       return weights;
 
    }
@@ -144,9 +72,9 @@ public class Loader
          }
          out.println();
       }
+      
       out.flush();
       out.close();
-
    }
 
    /**
@@ -158,23 +86,37 @@ public class Loader
     *         the expected output
     * @throws FileNotFoundException
     */
-   public static Map<double[], Double> loadTrainSet(String filename) throws FileNotFoundException
+   public static Map<double[], double[]> loadTrainSet(String filename) throws FileNotFoundException
    {
-      Map<double[], Double> train = new HashMap<double[], Double>();
+      Map<double[], double[]> train = new HashMap<double[], double[]>();
       Scanner sc = new Scanner(new File(filename));
+      
       while (sc.hasNext())
       {
          String ln = sc.nextLine();
          String[] dat = ln.split(" ");
          double[] inputs = new double[dat.length];
+         
          for (int i = 0; i < dat.length; i++)
          {
             if (!dat[i].trim().equals(""))
                inputs[i] = Double.valueOf(dat[i].trim());
          }
-         double truth = Double.valueOf(sc.nextLine());
-         train.put(inputs, truth);
+         
+         ln = sc.nextLine();
+         dat = ln.split(" ");
+         double[] outputs = new double[dat.length];
+         
+         for (int i = 0; i < dat.length; i++)
+         {
+            if (!dat[i].trim().equals(""))
+               outputs[i] = Double.valueOf(dat[i].trim());
+         }
+         
+         train.put(inputs, outputs);
       }
+      sc.close();
+      
       System.out.println("Loaded " + train.size() + " training cases.");
 
       return train;
@@ -187,66 +129,76 @@ public class Loader
     * @throws IOException
     */
    public static void main(String[] args) throws IOException
-   {
-      int[] hidden = new int[1];
+   {                  
+      if(args.length!=1) 
+      {
+         System.err.println("Expected 1 argument(path to config file)");
+      }
+      
+      String config = args[0];
+      
+      Scanner sc = new Scanner(new File(config));
+      
+      
+      int inputs = Integer.valueOf(sc.nextLine());              // Sets number of input activations
+      
+      int[] hidden = new int[1];  
+      hidden[0] = Integer.valueOf(sc.nextLine());               // Number of hidden nodes in hidden layer
+      
+      int outputs = Integer.valueOf(sc.nextLine());             // Sets number of output nodes
+      
+      double lambda = Double.valueOf(sc.nextLine());            // Sets lambda(learning rate)
+      
 
-      int inputActivations = Integer.valueOf(args[0]);
-      hidden[0] = Integer.valueOf(args[1]);
-      double weightHigh = 2.0;
-      double weightLow = -2.0;
+      Network n = new Network(inputs, hidden, outputs, lambda);
 
-      double lambda = Double.valueOf(args[2]);
-      Map<double[], Double> training = new HashMap<double[], Double>();
+      String weight = sc.nextLine();
+      
+      try 
+      {
+         /*
+          * Sets the random weights for the network between
+          * given high and low weights or reads in from file
+          */
+         double lowerWeightbound = Double.valueOf(weight.split(",")[0].trim());
+         double higherWeightbound = Double.valueOf(weight.split(",")[1].trim());   
+         n.setRandWeights(lowerWeightbound, higherWeightbound);
+      }
+      catch(Exception e) 
+      {
+         /*
+          * Loads weights from file 
+          */
+         n.setWeights(readWeights(weight, n.getWeights()));        
+      }
+      
+      String trainset = sc.nextLine();
+      Map<double[], double[]> training = new HashMap<double[], double[]>();             // Loads the training set for the network
+      training = loadTrainSet(trainset);
+      
+      int maxIterations = Integer.valueOf(sc.nextLine());                               // Sets the stopping conditions for the network
+      double error = Double.valueOf(sc.nextLine());
 
-      Network n = new Network(inputActivations, hidden, 1, lambda);
 
-      if (args.length >= 4 && !args[3].trim().equals("")) 
-      {
-         weightLow = -Double.valueOf(args[3]);
-         weightHigh = Double.valueOf(args[3]);
-      }
-      n.setRandWeights(weightLow, weightHigh);
-      if (args.length < 5 || args[4].trim().equals(""))
-      {
-         System.err.println("NEEDS INPUT FILE FOR TRAINING SET!");
-         System.exit(1);
-      }
-      else
-      {
-         training = loadTrainSet(args[4]);
-      }
-      int maxIterations = 0;
-      if (args.length < 7 || args[6].trim().equals(""))
-      {
-         maxIterations = DEFAULT_MAX_ITERATIONS;
-      }
-      else
-      {
-         maxIterations = Integer.valueOf(args[6].trim());
-      }
-      double error = 0.0;
-
-      if (args.length < 8 || args[7].trim().equals(""))
-      {
-         error = DEFAULT_ERROR_THRESHOLD;
-      }
-      else
-      {
-         error = Double.valueOf(args[7].trim());
-      }
-      n.setTrainingHyperparams(maxIterations, error);
+      n.setTrainingHyperparams(maxIterations, error);                                   // Starts training on the network
       n.trainNetwork(training);
-      System.out.println("Weight Range: "+ weightLow+" to "+weightHigh);
-      if (args.length < 6 || args[5].trim().equals(""))
+
+      /*
+       * Writes out the final weights to file
+       */
+      if (!sc.hasNext())
       {
          writeWeights(DEFAULT_WEIGHT_OUTPUT_FILE, n.getWeights());
          System.out.println("Weights written to: " + DEFAULT_WEIGHT_OUTPUT_FILE);
       }
       else
       {
-         writeWeights(args[5], n.getWeights());
-         System.out.println("Weights written to: " + args[5]);
+         String output = sc.nextLine();
+         writeWeights(output, n.getWeights());
+         System.out.println("Weights written to: " + output);
       }
+      sc.close();
+
    }
 
-}// public class Reader
+}// public class Loader
