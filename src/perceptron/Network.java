@@ -10,7 +10,7 @@ import java.util.Map;
  * only 1 hidden layer
  * 
  * @author Harsh Deep Period 2
- * @version 3.23.20
+ * @version 4.7.20
  */
 public class Network
 {
@@ -120,9 +120,10 @@ public class Network
          double error = 0.0;
          double cases = 0;
          /*
-          * Computes total error after every epoch and prints it
+          * Computes total error after every epoch and
+          * prints it
           */
-         for (double[] inputs : trainSet.keySet())                          
+         for (double[] inputs : trainSet.keySet())
          {
             nodes[0] = inputs;
             double[] out = forwardPropagation();
@@ -133,12 +134,12 @@ public class Network
             }
             cases++;
          }
-         error /= (cases*(double)(outputs));                                        // Computes the average error
-         
+         error /= (cases * (double) (outputs));                                        // Computes the average error
+
          System.out.println("Epoch #" + iteration + ", Average Error: " + error + ", Lambda: " + lambda);
 
-         if (error < error_threshold)                                                 // Early stoppping if error below predefined
-                                                                                      // stopping point
+         if (error < error_threshold)                                                  // Early stoppping if error below predefined
+                                                                                       // stopping point
          {
             System.out.println("TRAINING ENDED EARLY: Error below threshold");
             printCases(trainSet);
@@ -149,7 +150,7 @@ public class Network
       System.out.println("TRAINING ENDED: FINISHED " + max_iterations + " iterations.");
       printCases(trainSet);
 
-   }// trainNetwork
+   }// trainNetwork(Map<double[], double[]> trainSet)
 
    /**
     * Prints the outputs of the network on all of the
@@ -217,6 +218,7 @@ public class Network
             theta[i] += nodes[numLayers - 2][j] * weights[numLayers - 2][j][0];
          }
       }
+      
       double[] psi = new double[outputs];
       /*
        * Computes psi based on the values for theta and
@@ -281,7 +283,7 @@ public class Network
 
       /*
        * Updates the weights array based on the weight
-       * deltas
+       * deltas and zeroes the weight delta array.
        */
       for (int n = 0; n < weights.length; n++)
       {
@@ -423,12 +425,12 @@ public class Network
             double activated = activation(dotProduct);   // Applies the activation function to the
                                                          // dotproduct
             nodes[n][j] = activated;
-            
+
          } // for (int j = 0; j < nodes[n].length; j++)
 
       } // for (int n = 1; n < nodes.length; n++)
       return nodes[numLayers - 1];
-      
+
    }// forwardPropogation
 
    /**

@@ -16,12 +16,12 @@ import perceptron.Network;
  * sources and acts as a driver for the Network.
  * 
  * @author Harsh Deep Period 2
- * @version 3.25.20
+ * @version 4.7.20
  */
 public class Loader
 {
    public static final String DEFAULT_WEIGHT_OUTPUT_FILE = "weights.output";
-   
+
    /**
     * Reads weights from the given file
     * 
@@ -44,7 +44,7 @@ public class Loader
                weights[n][k][j] = sc.nextDouble();
             }
       sc.close();
-      
+
       return weights;
 
    }
@@ -72,7 +72,7 @@ public class Loader
          }
          out.println();
       }
-      
+
       out.flush();
       out.close();
    }
@@ -90,33 +90,33 @@ public class Loader
    {
       Map<double[], double[]> train = new HashMap<double[], double[]>();
       Scanner sc = new Scanner(new File(filename));
-      
-      while (sc.hasNext())
+
+      while (sc.hasNext())                              // iterates across the training set
       {
          String ln = sc.nextLine();
          String[] dat = ln.split(" ");
          double[] inputs = new double[dat.length];
-         
+
          for (int i = 0; i < dat.length; i++)
          {
             if (!dat[i].trim().equals(""))
                inputs[i] = Double.valueOf(dat[i].trim());
          }
-         
+
          ln = sc.nextLine();
          dat = ln.split(" ");
          double[] outputs = new double[dat.length];
-         
+
          for (int i = 0; i < dat.length; i++)
          {
             if (!dat[i].trim().equals(""))
                outputs[i] = Double.valueOf(dat[i].trim());
          }
-         
+
          train.put(inputs, outputs);
       }
       sc.close();
-      
+
       System.out.println("Loaded " + train.size() + " training cases.");
 
       return train;
@@ -129,62 +129,61 @@ public class Loader
     * @throws IOException
     */
    public static void main(String[] args) throws IOException
-   {                  
-      if(args.length!=1) 
+   {
+      if (args.length != 1)
       {
          System.err.println("Expected 1 argument(path to config file)");
       }
-      
+
       String config = args[0];
-      
+
       Scanner sc = new Scanner(new File(config));
-      
-      
+
       int inputs = Integer.valueOf(sc.nextLine());              // Sets number of input activations
-      
-      int[] hidden = new int[1];  
+
+      int[] hidden = new int[1];
       hidden[0] = Integer.valueOf(sc.nextLine());               // Number of hidden nodes in hidden layer
-      
+
       int outputs = Integer.valueOf(sc.nextLine());             // Sets number of output nodes
-      
+
       double lambda = Double.valueOf(sc.nextLine());            // Sets lambda(learning rate)
-      
 
       Network n = new Network(inputs, hidden, outputs, lambda);
 
       String weight = sc.nextLine();
-      
-      try 
+
+      try
       {
          /*
           * Sets the random weights for the network between
-          * given high and low weights or reads in from file
+          * given high and low weights or reads in from
+          * file
           */
          double lowerWeightbound = Double.valueOf(weight.split(",")[0].trim());
-         double higherWeightbound = Double.valueOf(weight.split(",")[1].trim());   
+         double higherWeightbound = Double.valueOf(weight.split(",")[1].trim());
          n.setRandWeights(lowerWeightbound, higherWeightbound);
       }
-      catch(Exception e) 
+      catch (Exception e)
       {
          /*
-          * Loads weights from file 
+          * Loads weights from seperate file
           */
-         n.setWeights(readWeights(weight, n.getWeights()));        
+         n.setWeights(readWeights(weight, n.getWeights()));
       }
-      
+
       String trainset = sc.nextLine();
       Map<double[], double[]> training = new HashMap<double[], double[]>();             // Loads the training set for the network
       training = loadTrainSet(trainset);
-      
-      int maxIterations = Integer.valueOf(sc.nextLine());                               // Sets the stopping conditions for the network
-      double error = Double.valueOf(sc.nextLine());
 
+      int maxIterations = Integer.valueOf(sc.nextLine());                               // Sets the stopping conditions for the
+                                                                                        // network
+      double error = Double.valueOf(sc.nextLine());
 
       n.setTrainingHyperparams(maxIterations, error);                                   // Starts training on the network
       n.trainNetwork(training);
 
       /*
-       * Writes out the final weights to file
+       * Writes out the final weights to provided file(or default if none was provided)
        */
       if (!sc.hasNext())
       {
