@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -20,7 +22,7 @@ import perceptron.Network;
  */
 public class Loader
 {
-   public static final String DEFAULT_WEIGHT_OUTPUT_FILE = "weights.output";
+   public static final String DEFAULT_WEIGHT_OUTPUT_FILE = "./data/weights/weights";
 
    /**
     * Reads weights from the given file
@@ -37,6 +39,10 @@ public class Loader
    public static double[][][] readWeights(String filename, double[][][] weights) throws FileNotFoundException
    {
       Scanner sc = new Scanner(new File(filename));
+      /*
+       * Iterates across all of the weights in file and
+       * populates the weights array
+       */
       for (int n = 0; n < weights.length; n++)
          for (int k = 0; k < weights[n].length; k++)
             for (int j = 0; j < weights[n][k].length; j++)
@@ -61,6 +67,10 @@ public class Loader
    public static void writeWeights(String filename, double[][][] weights) throws IOException
    {
       PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+      /*
+       * Iterates across all of the weights in the array
+       * and writes to file
+       */
       for (int n = 0; n < weights.length; n++)
       {
          for (int k = 0; k < weights[n].length; k++)
@@ -90,13 +100,20 @@ public class Loader
    {
       Map<double[], double[]> train = new HashMap<double[], double[]>();
       Scanner sc = new Scanner(new File(filename));
-
-      while (sc.hasNext())                              // iterates across the training set
+      /*
+       * Iterates across all of the training sets in the
+       * network.
+       */
+      while (sc.hasNext())
       {
          String ln = sc.nextLine();
          String[] dat = ln.split(" ");
          double[] inputs = new double[dat.length];
 
+         /*
+          * Stores all of the inputs for the given testing
+          * case
+          */
          for (int i = 0; i < dat.length; i++)
          {
             if (!dat[i].trim().equals(""))
@@ -107,12 +124,15 @@ public class Loader
          dat = ln.split(" ");
          double[] outputs = new double[dat.length];
 
+         /*
+          * Stores all of the outputs for the given testing
+          * case
+          */
          for (int i = 0; i < dat.length; i++)
          {
             if (!dat[i].trim().equals(""))
                outputs[i] = Double.valueOf(dat[i].trim());
          }
-
          train.put(inputs, outputs);
       }
       sc.close();
@@ -125,17 +145,26 @@ public class Loader
    /**
     * A driver class for the network
     * 
-    * @param args the command line arguments.
-    * @throws IOException
+    * @param args the first argument should be the
+    *             file path to the configuration
+    *             file. The configuration file should
+    *             list the number of nodes in each
+    *             layer, the lambda value, the random
+    *             weight range, the training set
+    *             file, the max iterations, the error
+    *             threshold, and (optionally) the
+    *             weight output file all on a separate line.
+    * @throws IOException if file cannot be opened
     */
    public static void main(String[] args) throws IOException
    {
-      if (args.length != 1)
+      if (args.length != 1)                                     // Checks for the presence
       {
          System.err.println("Expected 1 argument(path to config file)");
+         System.exit(1);
       }
 
-      String config = args[0];
+      String config = args[0];                                  // Gets the config filepath from the cmd arguments
 
       Scanner sc = new Scanner(new File(config));
 
@@ -166,7 +195,7 @@ public class Loader
       catch (Exception e)
       {
          /*
-          * Loads weights from seperate file
+          * Loads weights from separate file
           */
          n.setWeights(readWeights(weight, n.getWeights()));
       }
@@ -183,19 +212,20 @@ public class Loader
       n.trainNetwork(training);
 
       /*
-       * Writes out the final weights to provided file(or default if none was provided)
-       */
-      if (!sc.hasNext())
+       * Writes out the final weights to provided
+       * file(or default with timestamp if none was provided)
+       */ 
+      String timestamp = new SimpleDateFormat("yyyy-MM-dd-HH.mm.ss").format(new Date());
+      String targetFile = DEFAULT_WEIGHT_OUTPUT_FILE+timestamp+".out";
+      
+      if (sc.hasNext())
       {
-         writeWeights(DEFAULT_WEIGHT_OUTPUT_FILE, n.getWeights());
-         System.out.println("Weights written to: " + DEFAULT_WEIGHT_OUTPUT_FILE);
+          targetFile = sc.nextLine();
       }
-      else
-      {
-         String output = sc.nextLine();
-         writeWeights(output, n.getWeights());
-         System.out.println("Weights written to: " + output);
-      }
+      
+      writeWeights(targetFile, n.getWeights());
+      System.out.println("Weights written out to: \""+targetFile+"\"");
+      
       sc.close();
 
    }

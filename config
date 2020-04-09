@@ -1,9 +1,8 @@
 2
 6
 3
-5.0
+10.0
 -2, 2
-train
+./data/training/XOR-AND-OR
 10000
 0.001
-weights.out

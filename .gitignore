@@ -1,3 +1,5 @@
 *.zip
 bin/
-.settings/
+.classpath
+OldVersions/
+data/

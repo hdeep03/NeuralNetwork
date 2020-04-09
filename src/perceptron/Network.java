@@ -109,8 +109,8 @@ public class Network
    public void trainNetwork(Map<double[], double[]> trainSet)
    {
       printSummary();
-      for (int iteration = 0; iteration < max_iterations; iteration++)  // Updates the weights up to a max number of
-                                                                        // times. Stops after these many iterations
+      for (int iteration = 0; iteration < max_iterations; iteration++)              // Updates the weights up to a max number of
+                                                                                    // times. Stops after these many iterations
       {
          for (double[] inputs : trainSet.keySet())
          {
@@ -138,7 +138,7 @@ public class Network
 
          System.out.println("Epoch #" + iteration + ", Average Error: " + error + ", Lambda: " + lambda);
 
-         if (error < error_threshold)                                                  // Early stoppping if error below predefined
+         if (error < error_threshold)                                                  // Early stopping if error below predefined
                                                                                        // stopping point
          {
             System.out.println("TRAINING ENDED EARLY: Error below threshold");
@@ -195,9 +195,9 @@ public class Network
    private void updateWeights(double[] activations, double[] truth)
    {
       nodes[0] = activations;                   // Sets the input activations and
-      double[] F = forwardPropagation();       // does a forward propagation
+      double[] F = forwardPropagation();        // does a forward propagation
 
-      double[] omega = new double[outputs];    // computes the omega values
+      double[] omega = new double[outputs];     // computes the omega values
       for (int i = 0; i < outputs; i++)
       {
          omega[i] = truth[i] - F[i];
@@ -205,7 +205,7 @@ public class Network
 
       /*
        * Computes the theta values for last layer, the
-       * dotproduct of the activations in the hidden
+       * dot product of the activations in the hidden
        * layer with the weights from hidden to output
        * layer.
        */
@@ -256,7 +256,7 @@ public class Network
          for (int j = 0; j < nodes[numLayers - 2].length; j++)
          {
             /*
-             * Computes theta sub small j, the dotproduct of
+             * Computes theta sub small j, the dot product of
              * the input activations and the set of weights
              * between the input layer and the first hidden
              * layer
@@ -296,8 +296,7 @@ public class Network
             }
          }
       }
-   }// updateWeights(double[] activations, double
-    // truth)
+   }// updateWeights(double[] activations, double truth)
 
    /**
     * Retrieves the current weights for the network.
@@ -412,7 +411,7 @@ public class Network
          for (int j = 0; j < nodes[n].length; j++)
          {
 
-            double dotProduct = 0.0; // An accumulator for the dotproduct
+            double dotProduct = 0.0; // An accumulator for the dot product
             /*
              * Computes the dot product of the input values to
              * a node and the weights.
@@ -423,7 +422,7 @@ public class Network
             }
 
             double activated = activation(dotProduct);   // Applies the activation function to the
-                                                         // dotproduct
+                                                         // dot product
             nodes[n][j] = activated;
 
          } // for (int j = 0; j < nodes[n].length; j++)
