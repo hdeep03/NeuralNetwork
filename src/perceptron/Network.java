@@ -109,8 +109,8 @@ public class Network
       System.out.println("TRAINING STARTED AT " + timestamp);                          // Print a time stamp for when the network
                                                                                        // started to train
 
-      for (int iteration = 1; iteration <= max_iterations; iteration++)              // Updates the weights up to a max number of
-                                                                                     // times. Stops after these many iterations
+      for (int iteration = 1; iteration <= max_iterations; iteration++)                // Updates the weights up to a max number of
+                                                                                       // times. Stops after these many iterations
       {
          for (double[] inputs : trainSet.keySet())
          {
@@ -251,6 +251,7 @@ public class Network
 
       } // for (int i = 0; i < outputs; i++)
 
+      
       /*
        * Iterates across all of the input nodes
        */
@@ -278,7 +279,7 @@ public class Network
                weights[numLayers - 2][j][i] += lambda * nodes[numLayers - 2][j] * psi_I[i]; // Update weights in 2nd connectivity
                                                                                             // layer.
             }
-
+            
             double psiJ = omegaJ * activationDerivative(theta_J[j]);
             weights[numLayers - 3][k][j] += lambda * nodes[numLayers - 3][k] * psiJ;        // Using omegaJ and theta_J, updates the
                                                                                             // weights in the 1st connectivity layer
