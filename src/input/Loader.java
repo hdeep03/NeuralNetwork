@@ -168,12 +168,20 @@ public class Loader
 
       Scanner sc = new Scanner(new File(config));
 
-      int inputs = Integer.valueOf(sc.nextLine());              // Sets number of input activations
+      String[] structure = sc.nextLine().split(" ");
+      
+      int inputs = Integer.valueOf(structure[0]);              // Sets number of input activations
 
-      int[] hidden = new int[1];
-      hidden[0] = Integer.valueOf(sc.nextLine());               // Number of hidden nodes in hidden layer
+      int[] hidden = new int[structure.length-2];
+      /*
+       * Sets the dimensions of each hidden layer 
+       */
+      for(int i = 0;i<structure.length-2;i++) 
+      {
+         hidden[i] = Integer.valueOf(structure[i+1]);
+      }               
 
-      int outputs = Integer.valueOf(sc.nextLine());             // Sets number of output nodes
+      int outputs = Integer.valueOf(structure[structure.length-1]);             // Sets number of output nodes
 
       double lambda = Double.valueOf(sc.nextLine());            // Sets lambda(learning rate)
 

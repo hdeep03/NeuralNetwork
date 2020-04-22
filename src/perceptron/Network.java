@@ -30,6 +30,10 @@ public class Network
 
    private double lambda;           // The lambda value for the network.
 
+   private double[][] theta;        // The theta values array used during training
+
+   private double[][] psi;          // The psi values array used during training
+
    /**
     * Initializes the nodes and weights for the
     * network. Nodes and weights are all set to
@@ -79,6 +83,15 @@ public class Network
       this.lambda = lambda;                     // Sets the lambda value for the network's
                                                 // training.
       this.outputs = outputNodes;
+
+      theta = new double[numLayers][];        // Sets up the jaged array for theta values
+      psi = new double[numLayers][];        // Sets up the jaged array for theta values
+      for (int n = 0; n < numLayers ; n++)
+      {
+         theta[n] = new double[nodes[n].length];
+         psi[n] = new double[nodes[n].length];
+      }
+
    }// Network
 
    /**
@@ -196,7 +209,7 @@ public class Network
     * 
     * @param activations The activations are the
     *                    input activation values
-    * @param truth       the truth value for the
+    * @param truth       the truth values for the
     *                    given activations
     */
    private void updateWeights(double[] activations, double[] truth)
@@ -204,89 +217,49 @@ public class Network
       nodes[0] = activations;                   // Sets the input activations
 
       /*
-       * Creates the arrays in which certain key values
-       * are stored during forward propagation.
-       */
-      double[] theta_I = new double[outputs];
-      double[] theta_J = new double[nodes[numLayers - 2].length];
-      double[] psi_I = new double[outputs];
-
-      /*
        * Does a forward propagation on the network &
-       * stores key values such as theta sub i and psi
-       * sub i
+       * stores theta values and activations.
+       */
+      for (int n = 1; n < numLayers; n++)
+      {
+         for (int j = 0; j < nodes[n].length; j++)
+         {
+            theta[n][j] = 0.0;
+            for (int k = 0; k < nodes[n-1].length; k++)
+            {
+               theta[n][j] += nodes[n-1][k] * weights[n-1][k][j];
+            }
+            nodes[n][j] = activation(theta[n][j]);
+         }
+      }
+      /*
+       * Computes Psi_I and the omega values
        */
       for (int i = 0; i < outputs; i++)
       {
-         theta_I[i] = 0.0;
-         /*
-          * Iterates across all of the child nodes and
-          * computes their new values
-          */
-         for (int j = 0; j < nodes[numLayers - 2].length; j++)
-         {
-
-            theta_J[j] = 0.0;
-
-            /*
-             * Computes the dot product of the input values to
-             * a node and the weights.
-             */
-            for (int k = 0; k < nodes[numLayers - 3].length; k++)
-            {
-               theta_J[j] += weights[numLayers - 3][k][j] * nodes[numLayers - 3][k];
-            }
-            nodes[numLayers - 2][j] = activation(theta_J[j]);         // Computes the value of a node in hidden layer
-
-            theta_I[i] += nodes[numLayers - 2][j] * weights[numLayers - 2][j][i];
-         }// for (int j = 0; j < nodes[numLayers - 2].length; j++)
-
-         double forward = activation(theta_I[i]);                 // The result of the forward propagation for the
-                                                                  // given output_i.
-
-         double omega = truth[i] - forward;                       // The difference between the truth value and the
-                                                                  // output value.
-
-         psi_I[i] = omega * activationDerivative(theta_I[i]);
-
-      } // for (int i = 0; i < outputs; i++)
+         psi[numLayers - 1][i] = (truth[i] - nodes[numLayers - 1][i]) * activationDerivative(theta[numLayers - 1][i]);
+      }
 
       
-      /*
-       * Iterates across all of the input nodes
-       */
-      for (int k = 0; k < nodes[numLayers - 3].length; k++)
+      
+      for (int n = numLayers - 1; n >= 1; n--)
       {
-         /*
-          * Iterates across all of the hidden layer nodes
-          * and updates the weights in the 1st connectivity
-          * layer
-          */
-         for (int j = 0; j < nodes[numLayers - 2].length; j++)
+         
+         for (int k = 0; k < nodes[n-1].length; k++)
          {
-            double omegaJ = 0.0;
-            /*
-             * Iterates across all of the output layer nodes
-             * and updates the weights in the 2nd connectivity
-             * layer
-             */
-            for (int i = 0; i < outputs; i++)
+            double omega = 0.0;
+            for (int j = 0; j < nodes[n].length; j++)
             {
-               omegaJ += psi_I[i] * weights[numLayers - 2][j][i];                           // Accumulate omegaJ for updating
-                                                                                            // weights in 1st connectivity layer
-                                                                                            // later
-
-               weights[numLayers - 2][j][i] += lambda * nodes[numLayers - 2][j] * psi_I[i]; // Update weights in 2nd connectivity
-                                                                                            // layer.
+             omega += weights[n-1][k][j] * psi[n][j]; 
+ 
+             weights[n-1][k][j] += lambda*nodes[n-1][k] * psi[n][j];
             }
-            
-            double psiJ = omegaJ * activationDerivative(theta_J[j]);
-            weights[numLayers - 3][k][j] += lambda * nodes[numLayers - 3][k] * psiJ;        // Using omegaJ and theta_J, updates the
-                                                                                            // weights in the 1st connectivity layer
+            psi[n-1][k] = omega * activationDerivative(theta[n-1][k]);
          }
       }
 
-   }// updateWeights(double[] activations, double[] truth)
+   }// updateWeights(double[] activations, double[]
+    // truth)
 
    /**
     * Retrieves the current weights for the network.
