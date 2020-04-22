@@ -18,7 +18,7 @@ import perceptron.Network;
  * sources and acts as a driver for the Network.
  * 
  * @author Harsh Deep Period 2
- * @version 4.7.20
+ * @version 4.21.20
  */
 public class Loader
 {
@@ -164,15 +164,16 @@ public class Loader
          System.exit(1);
       }
 
-      String config = args[0];                                  // Gets the config filepath from the cmd arguments
+      String config = args[0];                                                  // Gets the config filepath from the cmd arguments
 
       Scanner sc = new Scanner(new File(config));
 
       String[] structure = sc.nextLine().split(" ");
       
-      int inputs = Integer.valueOf(structure[0]);              // Sets number of input activations
+      int inputs = Integer.valueOf(structure[0]);                               // Sets number of input activations
 
       int[] hidden = new int[structure.length-2];
+      
       /*
        * Sets the dimensions of each hidden layer 
        */
@@ -183,7 +184,7 @@ public class Loader
 
       int outputs = Integer.valueOf(structure[structure.length-1]);             // Sets number of output nodes
 
-      double lambda = Double.valueOf(sc.nextLine());            // Sets lambda(learning rate)
+      double lambda = Double.valueOf(sc.nextLine());                            // Sets lambda(learning rate)
 
       Network n = new Network(inputs, hidden, outputs, lambda);
 
