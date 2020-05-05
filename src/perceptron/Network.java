@@ -8,11 +8,32 @@ import java.util.Map;
 /**
  * A feed-forward neural network that can do
  * forward propagation and has the ability to
- * train with multiple outputs simultaneously but
- * only 1 hidden layer
+ * train with multiple outputs simultaneously with
+ * any number of hidden layers
+ * 
+ * Methods:
+ * Constructor: 
+ *  - Network(int inputNodes, int[] hiddenLayerNodes, int outputNodes, double lambda)
+ * Public:
+ *  - void setTrainingHyperparams(int max_iterations, double error_threshold)
+ *  - void trainNetwork(Map<double[], double[]> trainSet)
+ *  - void printCases(Map<double[], double[]> trainSet)
+ *  - double[][][] getWeights()
+ *  - double random(double lower, double upper)
+ *  - void setRandWeights(double lower, double upper)
+ *  - void setWeights(double[][][] weights)
+ *  - void setInputActivations(double[] input)
+ *  - void printSummary()
+ *  - double[] forwardPropagation()
+ *  - 
+ * Private:
+ *  - void updateWeights(double[] activations, double[] truth)
+ *  - double activation(double x)
+ *  - double error(double T, double F)
+ *  - double activationDerivative(double x)
  * 
  * @author Harsh Deep Period 2
- * @version 4.7.20
+ * @version 5.1.20
  */
 public class Network
 {
@@ -21,6 +42,9 @@ public class Network
                                     // network
 
    private double[][][] weights;    // Stores the weights of the network
+
+   private int[] dimensions;        // Stores the dimensions of each layer of the
+                                    // network
 
    private int max_iterations;      // The stopping conditions for the network
    private double error_threshold;
@@ -53,8 +77,14 @@ public class Network
 
       numLayers = nodes.length;
 
-      nodes[0] = new double[inputNodes];
+      nodes[0] = new double[inputNodes];                        // Sets the correct dimensions for the nodes 2d-array
       nodes[numLayers - 1] = new double[outputNodes];
+
+      dimensions = new int[numLayers];
+
+      dimensions[0] = nodes[0].length;                          // Creates a dimensions array for the number of nodes in each layer
+      dimensions[numLayers - 1] = nodes[numLayers - 1].length;
+
       /*
        * Sets up the nodes array with the jagged array
        * which is defined by the values in
@@ -64,6 +94,7 @@ public class Network
       for (int n = 0; n < hiddenLayerNodes.length; n++)
       {
          nodes[n + 1] = new double[hiddenLayerNodes[n]];
+         dimensions[n + 1] = hiddenLayerNodes[n];
       }
 
       weights = new double[numLayers - 1][][]; // The number of connection layers is one less
@@ -77,22 +108,22 @@ public class Network
       for (int n = 0; n < numLayers - 1; n++)
 
       {
-         weights[n] = new double[nodes[n].length][nodes[n + 1].length];
+         weights[n] = new double[dimensions[n]][dimensions[n + 1]];
       }
 
-      this.lambda = lambda;                     // Sets the lambda value for the network's
-                                                // training.
+      this.lambda = lambda;                    // Sets the lambda value for the network's
+                                               // training.
       this.outputs = outputNodes;
 
-      theta = new double[numLayers][];        // Sets up the jaged array for theta values
-      psi = new double[numLayers][];        // Sets up the jaged array for theta values
-      for (int n = 0; n < numLayers ; n++)
+      theta = new double[numLayers][];         // Sets up the jaged array for theta values
+      psi = new double[numLayers][];           // Sets up the jaged array for psi values
+      for (int n = 0; n < numLayers; n++)
       {
-         theta[n] = new double[nodes[n].length];
-         psi[n] = new double[nodes[n].length];
+         theta[n] = new double[dimensions[n]];
+         psi[n] = new double[dimensions[n]];
       }
 
-   }// Network
+   }// Network(int inputNodes, int[] hiddenLayerNodes, int outputNodes, double lambda)
 
    /**
     * Sets the training parameters
@@ -116,22 +147,37 @@ public class Network
     */
    public void trainNetwork(Map<double[], double[]> trainSet)
    {
-      printSummary();                                                                // Print data about the network configuration
+      double[] out = null;
+      double[] truth = null;
+      printSummary();                                                                 // Print data about the network configuration
 
       String timestamp = new SimpleDateFormat("yyyy-MM-dd-HH.mm.ss").format(new Date());
       System.out.println("TRAINING STARTED AT " + timestamp);                          // Print a time stamp for when the network
                                                                                        // started to train
 
-      for (int iteration = 1; iteration <= max_iterations; iteration++)                // Updates the weights up to a max number of
-                                                                                       // times. Stops after these many iterations
+      boolean error_threshold_met = false;                                             // boolean to check if the error threshold is met and
+                                                                                       // exit loop early
+      
+      
+      int iteration = 0;
+      /*
+       * Updates the weights up to a max number of
+       * times. Stops after these many interations or if
+       * error is low enough
+       */
+      while (iteration <= max_iterations && !error_threshold_met)
       {
+         iteration++;
+         
          for (double[] inputs : trainSet.keySet())
          {
-            updateWeights(inputs, trainSet.get(inputs));                             // Updates the weights in the network based on
-                                                                                     // all of the training cases
+            updateWeights(inputs, trainSet.get(inputs));                               // Updates the weights in the network based
+                                                                                       // on
+                                                                                       // all of the training cases
          }
+
          double error = 0.0;
-         double cases = 0;
+         int cases = 0;
          /*
           * Computes total error after every epoch and
           * prints it
@@ -139,36 +185,38 @@ public class Network
          for (double[] inputs : trainSet.keySet())
          {
             nodes[0] = inputs;
-            double[] out = forwardPropagation();
-            double[] truth = trainSet.get(inputs);
-            for (int i = 0; i < out.length; i++)
+            out = forwardPropagation();
+            truth = trainSet.get(inputs);
+
+            for (int i = 0; i < outputs; i++)
             {
                error += error(out[i], truth[i]);
             }
             cases++;
-         }
-         error /= (cases * (double) (outputs));                      // Computes the average error
+         } // for (double[] inputs : trainSet.keySet())
 
-         if (error < error_threshold)                                // Early stopping if error below predefined
-                                                                     // stopping point
+         error /= (((double) cases) * (double) (outputs));           // Computes the average error
+
+         if (error < error_threshold)                                // Early stopping if error below predefined stopping point
          {
-            System.out.println("TRAINING ENDED EARLY AFTER " + iteration + " ITERATIONS: Error below threshold");
-
-            timestamp = new SimpleDateFormat("yyyy-MM-dd-HH.mm.ss").format(new Date());
-            System.out.println("TRAINING ENDED AT " + timestamp);                               // Print a time stamp for when the
-                                                                                                // network ended training
-
-            printCases(trainSet);
-            return;
+            error_threshold_met = true;
          }
-      }// for (int i = 0; i < MAX_ITERATIONS; i++)
+      }// while (iteration <= max_iterations && !error_threshold_met)
 
       timestamp = new SimpleDateFormat("yyyy-MM-dd-HH.mm.ss").format(new Date());
       System.out.println("TRAINING ENDED AT " + timestamp);                                    // Print a time stamp for when the
                                                                                                // network ended training
+      /*
+       * Prints a completion message depending on how
+       * training concluded.
+       */
+      if (error_threshold_met)
+         System.out.println("TRAINING ENDED EARLY AFTER " + iteration + " ITERATIONS: Error below threshold");
+      else
+         System.out.println("TRAINING ENDED: MAXIMUM ITERATIONS REACHED: " + max_iterations + " ITERATIONS.");
 
-      System.out.println("TRAINING ENDED: MAXIMUM ITERATIONS REACHED: " + max_iterations + " ITERATIONS.");
       printCases(trainSet);
+
    }// trainNetwork(Map<double[], double[]> trainSet)
 
    /**
@@ -188,9 +236,9 @@ public class Network
       {
          nodes[0] = inputs;
          double[] out = forwardPropagation();
-         double[] err = new double[out.length];
+         double[] err = new double[outputs];
          double[] truth = trainSet.get(inputs);
-         for (int i = 0; i < out.length; i++)
+         for (int i = 0; i < outputs; i++)
          {
 
             err[i] = error(out[i], truth[i]);
@@ -200,66 +248,9 @@ public class Network
       }
 
       printSummary();
-   }// printCases(Map<double[], Double> trainSet)
+   }// printCases(Map<double[], double[]> trainSet)
 
-   /**
-    * Updates the weights based on the given
-    * activations and the expected truth values using
-    * the backpropagation algorithm
-    * 
-    * @param activations The activations are the
-    *                    input activation values
-    * @param truth       the truth values for the
-    *                    given activations
-    */
-   private void updateWeights(double[] activations, double[] truth)
-   {
-      nodes[0] = activations;                   // Sets the input activations
-
-      /*
-       * Does a forward propagation on the network &
-       * stores theta values and activations.
-       */
-      for (int n = 1; n < numLayers; n++)
-      {
-         for (int j = 0; j < nodes[n].length; j++)
-         {
-            theta[n][j] = 0.0;
-            for (int k = 0; k < nodes[n-1].length; k++)
-            {
-               theta[n][j] += nodes[n-1][k] * weights[n-1][k][j];
-            }
-            nodes[n][j] = activation(theta[n][j]);
-         }
-      }
-      /*
-       * Computes Psi_I and the omega values
-       */
-      for (int i = 0; i < outputs; i++)
-      {
-         psi[numLayers - 1][i] = (truth[i] - nodes[numLayers - 1][i]) * activationDerivative(theta[numLayers - 1][i]);
-      }
-
-      
-      
-      for (int n = numLayers - 1; n >= 1; n--)
-      {
-         
-         for (int k = 0; k < nodes[n-1].length; k++)
-         {
-            double omega = 0.0;
-            for (int j = 0; j < nodes[n].length; j++)
-            {
-             omega += weights[n-1][k][j] * psi[n][j]; 
- 
-             weights[n-1][k][j] += lambda*nodes[n-1][k] * psi[n][j];
-            }
-            psi[n-1][k] = omega * activationDerivative(theta[n-1][k]);
-         }
-      }
-
-   }// updateWeights(double[] activations, double[]
-    // truth)
+   
 
    /**
     * Retrieves the current weights for the network.
@@ -309,7 +300,7 @@ public class Network
          for (int k = 0; k < weights[n].length; k++)
             for (int j = 0; j < weights[n][k].length; j++)
                weights[n][k][j] = random(lower, upper);
-   }
+   }// setRandWeights(double lower, double upper)
 
    /**
     * Sets the weights to the given weights
@@ -338,16 +329,16 @@ public class Network
    {
       System.out.println("-------------------------");
       System.out.println("Network Summary:");
-      System.out.println("Input Layer: " + nodes[0].length + " nodes");
+      System.out.println("Input Layer: " + dimensions[0] + " nodes");
       for (int n = 1; n < numLayers - 1; n++)
       {
 
-         System.out.println("Hidden Layer " + n + ": " + nodes[n].length + " nodes");
+         System.out.println("Hidden Layer " + n + ": " + dimensions[n] + " nodes");
       }
-      System.out.println("Output Layer: " + nodes[numLayers - 1].length + " nodes");
+      System.out.println("Output Layer: " + dimensions[numLayers - 1] + " nodes");
       System.out.println("Lambda: " + lambda);
       System.out.println("Max_Iterations: " + max_iterations);
-   }
+   } // printSummary()
 
    /**
     * Computes the intermediate values for the
@@ -371,7 +362,7 @@ public class Network
           * Iterates across all of the child nodes and
           * computes their new values
           */
-         for (int j = 0; j < nodes[n].length; j++)
+         for (int j = 0; j < dimensions[n]; j++)
          {
 
             double dotProduct = 0.0; // An accumulator for the dot product
@@ -379,7 +370,7 @@ public class Network
              * Computes the dot product of the input values to
              * a node and the weights.
              */
-            for (int i = 0; i < nodes[n - 1].length; i++)
+            for (int i = 0; i < dimensions[n - 1]; i++)
             {
                dotProduct += nodes[n - 1][i] * weights[n - 1][i][j];
             }
@@ -388,13 +379,103 @@ public class Network
                                                          // dot product
             nodes[n][j] = activated;
 
-         } // for (int j = 0; j < nodes[n].length; j++)
+         } // for (int j = 0; j < dimensions[n]; j++)
 
-      } // for (int n = 1; n < nodes.length; n++)
+      } // for (int n = 1; n < numLayers; n++)
       return nodes[numLayers - 1];
 
-   }// forwardPropogation
+   }// forwardPropogation()
 
+   /**
+    * Updates the weights based on the given
+    * activations and the expected truth values using
+    * the backpropagation algorithm
+    * 
+    * @param activations The activations are the
+    *                    input activation values
+    * @param truth       the truth values for the
+    *                    given activations
+    */
+   private void updateWeights(double[] activations, double[] truth)
+   {
+      nodes[0] = activations;                   // Sets the input activations
+
+      /*
+       * Does a forward propagation on the network &
+       * stores theta values and activations.
+       */
+      for (int n = 1; n < numLayers; n++)
+      {
+         /*
+          * Iterates across nodes in layer n and stores the
+          * theta values and updates the values of the
+          * nodes in this layer
+          */
+         for (int j = 0; j < dimensions[n]; j++)
+         {
+            theta[n][j] = 0.0;
+
+            /*
+             * Computes the theta values for each node in
+             * layer n.
+             */
+            for (int k = 0; k < dimensions[n - 1]; k++)
+            {
+               theta[n][j] += nodes[n - 1][k] * weights[n - 1][k][j];           // Evaluates theta for each node in this layer
+            }
+            nodes[n][j] = activation(theta[n][j]);                              // Updates the value of the node by applying
+                                                                                // activation to the theta
+         }// for (int j = 0; j < dimensions[n]; j++)
+
+      } // for (int n = 1; n < numLayers; n++)
+
+      /*
+       * Computes Psi_I and the omega values in the last
+       * layer.
+       */
+      for (int i = 0; i < outputs; i++)
+      {
+         psi[numLayers - 1][i] = (truth[i] - nodes[numLayers - 1][i]) * activationDerivative(theta[numLayers - 1][i]);
+      }
+
+      /*
+       * This is the backpropagation loop. It starts
+       * from the last layer and works its way backward
+       * through the network
+       */
+      for (int n = numLayers - 1; n >= 1; n--)
+      {
+         /*
+          * Iterates through the n-1 layer and computes the
+          * psi values for n-1 layer
+          */
+         for (int k = 0; k < dimensions[n - 1]; k++)
+         {
+            double omega = 0.0;
+            /*
+             * Iterates through the nodes in layer n and
+             * computes the omegas then applies changes to the
+             * weights between n-1 and n layer.
+             */
+            for (int j = 0; j < dimensions[n]; j++)
+            {
+               omega += weights[n - 1][k][j] * psi[n][j];                       // The calculation of the omega value which is
+                                                                                // used to find the psi values for n-1 layer
+
+               weights[n - 1][k][j] += lambda * nodes[n - 1][k] * psi[n][j];    // Updates the weights based on the psi values
+                                                                                // from layer n and is done after omega is
+                                                                                // calculated.
+            }// for (int j = 0; j < dimensions[n]; j++)
+
+            psi[n - 1][k] = omega * activationDerivative(theta[n - 1][k]);      // Using the computed omega, computes the psi
+                                                                                // values in the n-1 layer.
+
+         }// for (int k = 0; k < dimensions[n-1]; k++)
+
+      } // for (int n = numLayers - 1; n >= 1; n--)
+
+   }// updateWeights(double[] activations, double[] truth)
+   
    /**
     * Applies the activation function to the input
     * variable
@@ -405,7 +486,7 @@ public class Network
     * @return the value of the activation function
     *         evaluated at the given value.
     */
-   public double activation(double x)
+   private double activation(double x)
    {
       return 1.0 / (1.0 + Math.exp(-x));    // Sigmoid activation function
    }
@@ -433,7 +514,7 @@ public class Network
     * @return the derivative of the activation
     *         function at the given value.
     */
-   public double activationDerivative(double x)
+   private double activationDerivative(double x)
    {
       double activated = activation(x);
       return activated * (1.0 - activated); // Derivative of the activation function:

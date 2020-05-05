@@ -17,8 +17,15 @@ import perceptron.Network;
  * A Reader file that takes in input from various
  * sources and acts as a driver for the Network.
  * 
+ * Methods:
+ * Public:
+ *  - double[][][] readWeights(String filename, double[][][] weights)
+ *  - void writeWeights(String filename, double[][][] weights)
+ *  - Map<double[], double[]> loadTrainSet(String filename)
+ *  - void main(String[] args)
+ *  
  * @author Harsh Deep Period 2
- * @version 4.21.20
+ * @version 5.1.20
  */
 public class Loader
 {
@@ -53,7 +60,7 @@ public class Loader
 
       return weights;
 
-   }
+   } // double[][][] readWeights(String filename, double[][][] weights)
 
    /**
     * Write out the weights to file
@@ -85,7 +92,7 @@ public class Loader
 
       out.flush();
       out.close();
-   }
+   } // writeWeights(String filename, double[][][] weights)
 
    /**
     * Loads the training set from file
@@ -140,7 +147,7 @@ public class Loader
       System.out.println("Loaded " + train.size() + " training cases.");
 
       return train;
-   }
+   } // Map<double[], double[]> loadTrainSet(String filename)
 
    /**
     * A driver class for the network
@@ -158,7 +165,7 @@ public class Loader
     */
    public static void main(String[] args) throws IOException
    {
-      if (args.length != 1)                                     // Checks for the presence
+      if (args.length != 1)                                                     // Checks for the presence of config filepath
       {
          System.err.println("Expected 1 argument(path to config file)");
          System.exit(1);
@@ -190,15 +197,16 @@ public class Loader
 
       String weight = sc.nextLine();
 
+      /*
+       * Sets the random weights for the network between
+       * given high and low weights or reads in from
+       * file
+       */
       try
-      {
-         /*
-          * Sets the random weights for the network between
-          * given high and low weights or reads in from
-          * file
-          */
+      {       
          double lowerWeightbound = Double.valueOf(weight.split(",")[0].trim());
          double higherWeightbound = Double.valueOf(weight.split(",")[1].trim());
+         System.out.println("Set random weights in the range between "+lowerWeightbound+" and "+higherWeightbound);
          n.setRandWeights(lowerWeightbound, higherWeightbound);
       }
       catch (Exception e)
@@ -207,6 +215,7 @@ public class Loader
           * Loads weights from separate file
           */
          n.setWeights(readWeights(weight, n.getWeights()));
+         System.out.println("Loaded weights from file");
       }
 
       String trainset = sc.nextLine();
@@ -216,6 +225,8 @@ public class Loader
       int maxIterations = Integer.valueOf(sc.nextLine());                               // Sets the stopping conditions for the
                                                                                         // network
       double error = Double.valueOf(sc.nextLine());
+      
+      System.out.println("Stopping Conditions: Max Iterations: "+maxIterations+"; Error threshold: "+error);
 
       n.setTrainingHyperparams(maxIterations, error);                                   // Starts training on the network
       n.trainNetwork(training);
@@ -237,6 +248,6 @@ public class Loader
       
       sc.close();
 
-   }
+   }// main(String[] args)
 
 }// public class Loader
